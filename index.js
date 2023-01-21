@@ -30,6 +30,11 @@ app.post('/user', async (req, res) => {
     }
 
 })
+app.get("/user/:handle", async (req, res) => {
+    const { handle } = req?.params
+    const result = await User.findOne({ name: handle })
+    res.send(result)
+})
 
 
 
