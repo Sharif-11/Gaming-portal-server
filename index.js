@@ -3,9 +3,10 @@ const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
 const port = process.env.PORT || 5000;
-const Test = require('./Schemas/user.schema');
 const User = require('./Schemas/user.schema');
 const handleError = require('./Errors/user.error');
+const Match = require('./Schemas/matches.schema');
+const valiatePlayer = require('./Middlewares/validatePlayer');
 const app = express();
 require('dotenv').config()
 //middleware
@@ -34,6 +35,18 @@ app.get("/user/:handle", async (req, res) => {
     const { handle } = req?.params
     const result = await User.findOne({ name: handle })
     res.send(result)
+})
+app.post("/match", valiatePlayer, async (req, res) => {
+    try {
+        const result = await Match(req?.body)
+        await result.save();
+        res.send({
+            status: "success",
+            result
+        })
+    } catch (error) {
+        res.send(error)
+    }
 })
 
 
