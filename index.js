@@ -6,8 +6,17 @@ const port = process.env.PORT || 5000;
 const User = require('./Schemas/user.schema');
 const handleError = require('./Errors/user.error');
 const Match = require('./Schemas/matches.schema');
-const valiatePlayer = require('./Middlewares/validatePlayer');
+const validatePlayer = require('./Middlewares/validatePlayer');
 const app = express();
+const http = require('http');
+const server = http.createServer(app);
+const { Server } = require('socket.io');
+const io = new Server(server, {
+    cors: {
+        origin: "*",
+
+    }
+})
 require('dotenv').config()
 //middleware
 app.use(cors());
@@ -36,7 +45,7 @@ app.get("/user/:handle", async (req, res) => {
     const result = await User.findOne({ name: handle })
     res.send(result)
 })
-app.post("/match", valiatePlayer, async (req, res) => {
+app.post("/match", validatePlayer, async (req, res) => {
     try {
         const result = await Match(req?.body)
         await result.save();
@@ -47,6 +56,84 @@ app.post("/match", valiatePlayer, async (req, res) => {
     } catch (error) {
         res.send(error)
     }
+})
+app.get("/matches/:gameType", async (req, res) => {
+    try {
+        const { gameType } = req?.params;
+        const result = await Match.find({ gameType, status: "waiting" });
+        res.send(result);
+    } catch (error) {
+        res.send({
+            status: "failed",
+            message: error?.message
+        })
+    }
+})
+app.get("/match/:_id", async (req, res) => {
+    const { _id } = req?.params
+    console.log(_id);
+    try {
+        const result = await Match.findById(_id)
+        res.send(result);
+    } catch (error) {
+        res.send({
+            status: "failed",
+            message: error?.message
+        })
+    }
+})
+
+const chessNamespace = io.of("/Chess");
+chessNamespace.on('connection', async (socket) => {
+    console.clear();
+    const { client, roomno } = socket?.handshake?.headers;
+    try {
+        const result = await Match.findOne({ _id: roomno });
+
+        const { firstPlayer, secondPlayer, _id, creator } = result;
+        if (_id) {
+            socket.join(roomno);
+            //joining information
+
+            if (client !== creator && !(firstPlayer && secondPlayer)) {
+                try {
+                    const updated = await Match.findByIdAndUpdate(roomno, {
+                        $set: {
+                            [firstPlayer ? "secondPlayer" : "firstPlayer"]: client,
+                            status: "running"
+                        }
+                    })
+
+                    setTimeout(() => {
+                        socket.to(roomno).emit("join", { joined: true })
+                    }, [2000])
+                } catch (error) {
+
+                }
+
+            }
+            socket.on("move", (data) => {
+                const updateDb = async () => {
+                    try {
+                        const { boardState } = data;
+                        const result = await Match.findByIdAndUpdate(roomno, { $set: { boardState } })
+
+                        if (result)
+                            socket.to(roomno).emit("move", data)
+                    } catch (error) {
+
+                    }
+                }
+                updateDb();
+            })
+
+        }
+
+    } catch (error) {
+
+    }
+
+    // console.log(client, roomno);
 })
 
 
@@ -71,8 +158,9 @@ app.post("/match", valiatePlayer, async (req, res) => {
 
 
 
+
 app.get("/", (req, res) => res.send("Welcome to game portal"))
-app.listen(port, () => {
+server.listen(port, () => {
     console.log("listening to port ", port);
-    console.log(process.env.DB_PASS);
+
 })

@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
 const validator = require("validator");
 const { Schema, model } = mongoose;
-const matchesSchema = Schema({
+const matchSchema = Schema({
     gameType: {
         type: String,
         required: [true, "*Game type must be provided"],
@@ -14,10 +14,10 @@ const matchesSchema = Schema({
     creator: {
         type: String,
         required: [true, "*Creator must be provided"],
-        validate: {
-            validator: (val) => validator.isEmail(val),
-            message: "*Email is invalid"
-        }
+        trim: true,
+        minLength: [6, "*Creator length is at least 6"],
+        maxLength: [15, "*Creator length is at most 15"],
+
     },
     status: {
         type: String,
@@ -34,30 +34,48 @@ const matchesSchema = Schema({
             message: "*Result is either draw or white or black"
         }
     },
-    player: [
-        {
-            email: {
-                type: String,
-                required: [true, "*Email must be provided"],
-                validate: {
-                    validator: (val) => validator.isEmail(val),
-                    message: "*Email is invalid"
-                }
-
-            },
-            turn: {
-                type: Number,
-                required: [true, "*Turn must be provided"],
-                default: 0,
-                enum: {
-                    values: [0, 1],
-                    message: "*Turn is either 0 or 1"
-                }
-            }
+    duration: {
+        type: Number,
+        required: [true, "*Duration must be provided"],
+        default: 10,
+        enum: {
+            values: [10, 15, 30, NaN],
+            message: "duration is either 10 ,15,30 or NaN"
         }
-    ]
+
+
+    },
+    roomNo: {
+        type: String,
+        unique: [true, "*Room no must be unique"],
+    },
+    firstPlayer: {
+        type: String,
+        trim: true
+    },
+    secondPlayer: {
+        type: String,
+        trim: true
+    },
+    creatorEmail: {
+        type: String,
+        trim: true,
+        required: [true, "*creatorEmail must be provided"],
+        validate: {
+            validator: (val) => validator.isEmail(val),
+            message: "*Email is invalid"
+        }
+
+    },
+    boardState: {
+        type: String,
+        default: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+    }
+
+
+
 }, {
     timestamps: true
 })
-const Match = model('Match', matchesSchema)
+const Match = model('Match', matchSchema)
 module.exports = Match;
