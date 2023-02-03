@@ -90,7 +90,63 @@ chessNamespace.on('connection', async (socket) => {
     try {
         const result = await Match.findOne({ _id: roomno });
 
-        const { firstPlayer, secondPlayer, _id, creator } = result;
+        const { firstPlayer, secondPlayer, _id, creator, gameType } = result;
+        if (gameType !== "Chess") return;
+        if (_id) {
+            if (firstPlayer && secondPlayer && client !== firstPlayer && client !== secondPlayer)
+                return;
+            socket.join(roomno);
+            //joining information
+
+            if (client !== creator && !(firstPlayer && secondPlayer)) {
+                try {
+                    const updated = await Match.findByIdAndUpdate(roomno, {
+                        $set: {
+                            [firstPlayer ? "secondPlayer" : "firstPlayer"]: client,
+                            status: "running"
+                        }
+                    })
+
+                    if (updated)
+                        socket.in(roomno).emit("join", { joined: true })
+
+                } catch (error) {
+
+                }
+
+            }
+            socket.on("move", (data) => {
+                const updateDb = async () => {
+                    try {
+                        const { boardState } = data;
+                        const result = await Match.findByIdAndUpdate(roomno, { $set: { boardState } })
+
+                        if (result)
+                            socket.to(roomno).emit("move", data)
+                    } catch (error) {
+
+                    }
+                }
+                updateDb();
+            })
+
+        }
+
+    } catch (error) {
+
+    }
+
+    // console.log(client, roomno);
+})
+const gomokuNamespace = io.of("/Gomoku");
+gomokuNamespace.on('connection', async (socket) => {
+    console.clear();
+    const { client, roomno } = socket?.handshake?.headers;
+    try {
+        const result = await Match.findOne({ _id: roomno });
+
+        const { firstPlayer, secondPlayer, _id, creator, gameType } = result;
+        if (gameType !== "Gomoku") return;
         if (_id) {
             if (firstPlayer && secondPlayer && client !== firstPlayer && client !== secondPlayer)
                 return;
