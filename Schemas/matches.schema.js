@@ -34,17 +34,6 @@ const matchSchema = Schema({
             message: "*Result is either draw or white or black"
         }
     },
-    duration: {
-        type: Number,
-        required: [true, "*Duration must be provided"],
-        default: 10,
-        enum: {
-            values: [10, 15, 30, NaN],
-            message: "duration is either 10 ,15,30 or NaN"
-        }
-
-
-    },
     roomNo: {
         type: String,
         unique: [true, "*Room no must be unique"],

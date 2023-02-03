@@ -92,6 +92,8 @@ chessNamespace.on('connection', async (socket) => {
 
         const { firstPlayer, secondPlayer, _id, creator } = result;
         if (_id) {
+            if (firstPlayer && secondPlayer && client !== firstPlayer && client !== secondPlayer)
+                return;
             socket.join(roomno);
             //joining information
 
@@ -104,9 +106,9 @@ chessNamespace.on('connection', async (socket) => {
                         }
                     })
 
-                    setTimeout(() => {
-                        socket.to(roomno).emit("join", { joined: true })
-                    }, [2000])
+                    if (updated)
+                        socket.in(roomno).emit("join", { joined: true })
+
                 } catch (error) {
 
                 }
