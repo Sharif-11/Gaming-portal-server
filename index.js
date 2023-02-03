@@ -57,6 +57,17 @@ app.post("/match", validatePlayer, async (req, res) => {
         res.send(error)
     }
 })
+app.get("/matches", async (req, res) => {
+    try {
+        const result = await Match.find({ status: "waiting" })
+        res.send(result);
+    } catch (error) {
+        res.send({
+            status: "failed",
+            message: error?.message
+        })
+    }
+})
 app.get("/matches/:gameType", async (req, res) => {
     try {
         const { gameType } = req?.params;
