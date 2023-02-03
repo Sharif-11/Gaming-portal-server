@@ -107,8 +107,11 @@ chessNamespace.on('connection', async (socket) => {
                         }
                     })
 
-                    if (updated)
-                        socket.in(roomno).emit("join", { joined: true })
+                    if (updated) {
+                        setTimeout(() => {
+                            socket.in(roomno).emit("join", { joined: true })
+                        }, [3000])
+                    }
 
                 } catch (error) {
 
@@ -162,8 +165,11 @@ gomokuNamespace.on('connection', async (socket) => {
                         }
                     })
 
-                    if (updated)
-                        socket.in(roomno).emit("join", { joined: true })
+                    if (updated) {
+                        setTimeout(() => {
+                            socket.in(roomno).emit("join", { joined: true })
+                        }, [3000])
+                    }
 
                 } catch (error) {
 
